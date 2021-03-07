@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="standard_45" value="45dp"/>
+    <dimen name="standard_21" value="45dp"/>
+    <dimen name="fab_margin" value="16dp"/>
+    <dimen name="standard_55">55</dimen>
+    <dimen name="standard_105">105</dimen>
+    <dimen name="standard_155">155</dimen>
+</resources>
