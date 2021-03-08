@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/mainLayout"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/mainRelativeLayout">
+
+
+
+<RelativeLayout
+    android:id="@+id/layoutCollapsed"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <ImageView
+    android:id="@+id/floatingwidgetButton"
+    android:layout_width="50dp"
+    android:layout_height="50dp"
+
+    android:src="@drawable/widget_button_foreground"></ImageView>
+
+</RelativeLayout>
+
+
+        <!-- Expanded View-->
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/layoutExpanded"
+            android:padding="18dp"
+            android:visibility="gone"
+            android:orientation="vertical" >
+
+
+
+            <LinearLayout
+                android:id="@+id/LinearLayout_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="20dp"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/Widget_Start_Rec"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginLeft="0dp"
+                    android:layout_marginTop="0dp"
+                    android:src="@drawable/floating_widget_start_rec_foreground" />
+
+                <ImageView
+                    android:id="@+id/Widget_Add_Rec"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginLeft="0dp"
+                    android:layout_marginTop="0dp"
+                    android:src="@drawable/floating_widget_add_rec_foreground" />
+
+                <ImageView
+                    android:id="@+id/Widget_Close_Icon"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginLeft="0dp"
+                    android:layout_marginTop="0dp"
+                    android:src="@drawable/floating_close_widget_foreground" />
+
+
+            </LinearLayout>
+
+
+            </LinearLayout>
+
+
+    </RelativeLayout>
+</FrameLayout>
