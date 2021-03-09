@@ -26,112 +26,70 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
-    Button start_stop;
-    AlertDialog alert;
-    boolean started = false;
+    Button start;
+    Button pause;
+    //FrameLayout mLayout;
+    private static final int SYSTEM_ALERT_WINDOW_PERMISSION = 2084;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        start_stop = findViewById(R.id.start_stop);
+//        start = findViewById(R.id.button);
+//        pause = findViewById(R.id.button2);
+//
+//        start.setOnClickListener(this);
+//        pause.setOnClickListener(this);
 
-        if (isMyServiceRunning(FloatingWindow.class)){
-            started = true;
-            start_stop.setText("Stop");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            askPermission();
         }
-
-        start_stop.setOnClickListener(new View.OnClickListener() {
+        start = findViewById(R.id.start_stop);
+        start.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                start_stop();
+            public void onClick(View v) {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                    if(!isMyServiceRunning(accessibilityService.class)){
+                    startService(new Intent(MainActivity.this, FloatingWindow.class));
+                    }
+                } else if (Settings.canDrawOverlays(getApplicationContext())) {
+                    startService(new Intent(MainActivity.this, FloatingWindow.class));
+
+                } else {
+                    askPermission();
+                    Toast.makeText(getApplicationContext(), "You need System Alert Window Permission to do this", Toast.LENGTH_SHORT).show();
+                }
             }
+
         });
 
-    }
-
-    public void start_stop() {
-        if (checkPermission()) {
-            if (started) {
-                stopService(new Intent(MainActivity.this, FloatingWindow.class));
-                start_stop.setText("Start");
-                started = false;
-            } else {
-                startService(new Intent(MainActivity.this, FloatingWindow.class));
-                start_stop.setText("Stop");
-                started = true;
-
-            }
-        }else {
-            reqPermission();
-        }
 
     }
 
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == RESULT_OK) {
-            if (checkPermission()) {
-                start_stop();
-            } else {
-                reqPermission();
-            }
-        }
+
+
+    private void askPermission() {
+        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:" + getPackageName()));
+        startActivityForResult(intent, SYSTEM_ALERT_WINDOW_PERMISSION);
     }
 
 
-    private boolean checkPermission() {
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
-            if (!Settings.canDrawOverlays(this)) {
-                reqPermission();
-                return false;
-            }
-            else {
-                return true;
-            }
-        }else{
+
+    private boolean isMyServiceRunning(Class<?> serviceClass)
+    { ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+    for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE))
+    {
+        if (serviceClass.getName().equals(service.service.getClassName())) {
             return true;
         }
-
+    }
+    return false;
     }
 
-    private void reqPermission(){
-        final AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
-        alertBuilder.setCancelable(true);
-        alertBuilder.setTitle("Screen overlay detected");
-        alertBuilder.setMessage("Enable 'Draw over other apps' in your system setting.");
-        alertBuilder.setPositiveButton("OPEN SETTINGS", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:" + getPackageName()));
-                startActivityForResult(intent,RESULT_OK);
-            }
-        });
-
-        alert = alertBuilder.create();
-        alert.show();
-
-
-    }
-
-
-    @Override
-    protected void onRestart() {
-        super.onRestart();
-        alert.dismiss();
-    }
-
-    private boolean isMyServiceRunning(Class<?> serviceClass) {
-        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClass.getName().equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
-    }
 }
+
+
+
