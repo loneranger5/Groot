@@ -8,6 +8,8 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import android.Manifest;
+import android.accessibilityservice.AccessibilityService;
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
@@ -15,14 +17,18 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
+import android.view.accessibility.AccessibilityManager;
 import android.widget.Button;
 import android.widget.Toast;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -30,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     Button pause;
     //FrameLayout mLayout;
     private static final int SYSTEM_ALERT_WINDOW_PERMISSION = 2084;
+    private static final int SYSTEM_ACCESSIBILITY_PERMISSION = 1024;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,11 +57,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                    if(!isMyServiceRunning(accessibilityService.class)){
+                    if(isAccessibilityServiceEnabled(getApplicationContext(),accessibilityService.class)){
                     startService(new Intent(MainActivity.this, FloatingWindow.class));
+                    }else{
+                        Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS,Uri.parse("package:" + getPackageName()));
+                        startActivityForResult(intent,SYSTEM_ACCESSIBILITY_PERMISSION );
+
                     }
                 } else if (Settings.canDrawOverlays(getApplicationContext())) {
-                    startService(new Intent(MainActivity.this, FloatingWindow.class));
+                    if(isAccessibilityServiceEnabled(getApplicationContext(),accessibilityService.class)){
+                        startService(new Intent(MainActivity.this, FloatingWindow.class));
+                    }else{
+                        Intent gintent = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
+                        startActivityForResult(gintent,SYSTEM_ACCESSIBILITY_PERMISSION );
+
+                    }
 
                 } else {
                     askPermission();
@@ -78,15 +95,17 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    private boolean isMyServiceRunning(Class<?> serviceClass)
-    { ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-    for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE))
-    {
-        if (serviceClass.getName().equals(service.service.getClassName())) {
-            return true;
+    public static boolean isAccessibilityServiceEnabled(Context context, Class<? extends AccessibilityService> service) {
+        AccessibilityManager am = (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
+        List<AccessibilityServiceInfo> enabledServices = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
+
+        for (AccessibilityServiceInfo enabledService : enabledServices) {
+            ServiceInfo enabledServiceInfo = enabledService.getResolveInfo().serviceInfo;
+            if (enabledServiceInfo.packageName.equals(context.getPackageName()) && enabledServiceInfo.name.equals(service.getName()))
+                return true;
         }
-    }
-    return false;
+
+        return false;
     }
 
 }

@@ -16,10 +16,10 @@ import androidx.annotation.RequiresApi;
 
 import com.jsb.youtubetest.FloatingWindow;
 
-public class accessibilityService extends AccessibilityService {
+public class accessibilityService extends AccessibilityService  {
 
 
-        private Handler mHandler;
+        private Handler mHandler,GHandler;
         private int mX;
         private int mY;
         private int eX;
@@ -32,6 +32,8 @@ public class accessibilityService extends AccessibilityService {
             HandlerThread handlerThread = new HandlerThread("auto-handler");
             handlerThread.start();
             mHandler = new Handler(handlerThread.getLooper());
+            GHandler = new Handler(handlerThread.getLooper());
+
 
 
 
@@ -49,9 +51,10 @@ public class accessibilityService extends AccessibilityService {
         @Override
         public int onStartCommand(Intent intent, int flags, int startId) {
             Log.d("Service", "SERVICE STARTED");
-            if (intent != null) {Bundle extras = intent.getExtras();
+            if (intent != null) {
+                Bundle extras = intent.getExtras();
                 String action = extras.getString("action");
-                if (action.equals("tap")) {
+                if (action.equals("Tap")) {
 
 
                     mX =extras.getInt("x");
@@ -82,17 +85,33 @@ public class accessibilityService extends AccessibilityService {
                     //mHandler.postDelayed(mRunnable, 1000);
                     mHandler.post(mRunnable);
 
-                } else if (action.equals("record")) {
+
+
+
+                } else if (action.equals("Swipe")) {
+
+
+
+
+                    mX =extras.getInt("x");
+                    mY = extras.getInt("y");
+                    eX = extras.getInt("dX");
+                    eY = extras.getInt("dY");
+
+
+
+
+
                     if (GRunnable == null) {
 
                         GRunnable = new GIntervalRunnable();
                     }
                     //playTap(mX,mY);
                     //mHandler.postDelayed(mRunnable, 1000);
-                    mHandler.post(GRunnable);
+                    GHandler.post(GRunnable);
 
-                } else if (action.equals("stop")) {
-                    mHandler.removeCallbacksAndMessages(null);
+
+
                 }
             }
             return super.onStartCommand(intent, flags, startId);
@@ -200,7 +219,7 @@ public class accessibilityService extends AccessibilityService {
             @Override
             public void run() {
                 //Log.d("clicked","click");
-               // playSwipe(mX, mY, eX, eY, 10);
+               playSwipe(mX, mY, eX, eY, 5);
             }
         }
     }
