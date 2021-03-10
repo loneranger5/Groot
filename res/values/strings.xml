@@ -1,3 +1,8 @@
 <resources>
-    <string name="app_name">YouTube Test</string>
+    <string name="app_name">Groot</string>
+    <string-array name="choice_items">
+        <item>Tap</item>
+        <item>Swipe</item>
+
+    </string-array>
 </resources>
