@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content" android:layout_height="wrap_content">
+
+    <RelativeLayout
+        android:id="@+id/secondWidgetMainLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/secondWidgetImage"
+            android:layout_width="wrap_content"
+            android:padding="5dp"
+
+            android:layout_height="wrap_content"
+            android:src="@drawable/second_widget_image_foreground">
+
+
+        </ImageView>
+    </RelativeLayout>
+</FrameLayout>
