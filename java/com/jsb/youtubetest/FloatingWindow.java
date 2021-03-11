@@ -11,6 +11,7 @@ import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -34,13 +35,19 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 
-
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 
 public class FloatingWindow extends Service {
-    private Handler mHandler,GHandler;
+    private Handler mHandler, GHandler;
 
     private Boolean gestureFlag = false;
 
@@ -49,35 +56,27 @@ public class FloatingWindow extends Service {
 
     private ImageView start_stop_rec;
 
+    private int seq = 0;
+
+    private File configFile;
 
 
-    //data storage
+    //data storage variables
 
-
-
-
-
-
-
-
+    //  File
 
 
     //secondWidget Drag variables
 
-    private int initialXX,initialSwipeXX,startSwipeXX,endSwipeXX,startXX,endXX;
-    private int initialYY,initialSwipeYY,startSwipeYY,endSwipeYY,startYY,endYY;
-    private int initialTouchXX,initialSwipeTouchXX,startSwipeTouchXX,startTapTouchXX;
-    private int initialTouchYY,initialSwipeTouchYY,startSwipeTouchYY,startTapTouchYY;
-    public int endTapTouchYY,endTapTouchXX,endSwipeTouchXX,endSwipeTouchYY;
+    private int initialXX, initialSwipeXX, startSwipeXX, endSwipeXX, startXX, endXX;
+    private int initialYY, initialSwipeYY, startSwipeYY, endSwipeYY, startYY, endYY;
+    private int initialTouchXX, initialSwipeTouchXX, startSwipeTouchXX, startTapTouchXX;
+    private int initialTouchYY, initialSwipeTouchYY, startSwipeTouchYY, startTapTouchYY;
+    public int endTapTouchYY, endTapTouchXX, endSwipeTouchXX, endSwipeTouchYY;
 
 
-
-
-    WindowManager wm,wm2,wm3;
-    View floatingView, collapsedView, expandedView,secondWidget,thirdWidget;
-
-
-
+    WindowManager wm, wm2, wm3;
+    View floatingView, collapsedView, expandedView, secondWidget, thirdWidget;
 
 
     @Override
@@ -85,25 +84,18 @@ public class FloatingWindow extends Service {
         super.onCreate();
 
 
-
-
-
         //additional widget and gesture Inject Handler
         HandlerThread handlerThread = new HandlerThread("tap-handler");
         handlerThread.start();
         mHandler = new Handler(handlerThread.getLooper());
 
-       GHandler = new Handler(handlerThread.getLooper());
-
-
-
-
+        GHandler = new Handler(handlerThread.getLooper());
 
 
         //floating view
-        floatingView = LayoutInflater.from(this).inflate(R.layout.floating_widget_view,null);
-        secondWidget = LayoutInflater.from(this).inflate(R.layout.second_widget,null);
-        thirdWidget = LayoutInflater.from(this).inflate(R.layout.third_widget,null);
+        floatingView = LayoutInflater.from(this).inflate(R.layout.floating_widget_view, null);
+        secondWidget = LayoutInflater.from(this).inflate(R.layout.second_widget, null);
+        thirdWidget = LayoutInflater.from(this).inflate(R.layout.third_widget, null);
 
         start_stop_rec = floatingView.findViewById(R.id.Widget_Start_Rec);
 
@@ -118,31 +110,41 @@ public class FloatingWindow extends Service {
 //                LinearLayout.LayoutParams.MATCH_PARENT);
 //        ll.setLayoutParams(layoutParams);
 
+
+        //config_create
+
+
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        seq = 1;
+
+        //File Write for coordinates making a clean file
+
+        if(create_file()) {
+            //config_write("SEQ \tMODE \tX \tY \tdX \tdY\n");}
+        }
+
+
 
         final WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE// | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS |WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS | WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS ,
-                ,PixelFormat.TRANSLUCENT);
+                , PixelFormat.TRANSLUCENT);
 
         params.gravity = Gravity.CENTER;
         params.x = 0;
         params.y = 0;
 
 
-
-        wm.addView(floatingView,params);
-
+        wm.addView(floatingView, params);
 
 
         expandedView = floatingView.findViewById(R.id.layoutExpanded);
 
         collapsedView = floatingView.findViewById(R.id.layoutCollapsed);
-
 
 
         floatingView.findViewById(R.id.Widget_Close_Icon).setOnClickListener(new View.OnClickListener() {
@@ -154,13 +156,9 @@ public class FloatingWindow extends Service {
         });
 
 
-
-
-
         expandedView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
 
 
                 collapsedView.setVisibility(View.VISIBLE);
@@ -188,7 +186,7 @@ public class FloatingWindow extends Service {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
 
-                switch (motionEvent.getAction()){
+                switch (motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
 
 
@@ -203,10 +201,10 @@ public class FloatingWindow extends Service {
 
                     case MotionEvent.ACTION_MOVE:
 
-                        updatepar.x = (int) (x+(motionEvent.getRawX()-px));
-                        updatepar.y = (int) (y+(motionEvent.getRawY()-py));
+                        updatepar.x = (int) (x + (motionEvent.getRawX() - px));
+                        updatepar.y = (int) (y + (motionEvent.getRawY() - py));
 
-                        wm.updateViewLayout(floatingView,updatepar);
+                        wm.updateViewLayout(floatingView, updatepar);
 
                     default:
                         break;
@@ -227,7 +225,6 @@ public class FloatingWindow extends Service {
         });
 
 
-
         //expanded view controls touch listeners
 
         floatingView.findViewById(R.id.Widget_Start_Rec).setOnClickListener(new View.OnClickListener() {
@@ -242,7 +239,7 @@ public class FloatingWindow extends Service {
                     start_stop_rec.setImageResource(R.drawable.floating_widget_stop_record_foreground);
                     recordFlag = true;
 
-                    if(mRunnable == null){
+                    if (mRunnable == null) {
                         mRunnable = new IntervalRunnable();
                     }
 
@@ -251,12 +248,11 @@ public class FloatingWindow extends Service {
                     start_stop_rec.setImageResource(R.drawable.floating_widget_start_rec_foreground);
                     recordFlag = false;
                     //flush hashmap or arraylist
-                    if(secondWidget.isAttachedToWindow()){
-                    wm2.removeView(secondWidget); //once stop is pressed it will remove extra widgets.
+                    if (secondWidget.isAttachedToWindow()) {
+                        wm2.removeView(secondWidget); //once stop is pressed it will remove extra widgets.
 
-                }
-                    if(thirdWidget.isAttachedToWindow())
-                    {
+                    }
+                    if (thirdWidget.isAttachedToWindow()) {
                         wm3.removeView(thirdWidget);//once stop is pressed it will remove extra widgets
                     }
                 }
@@ -285,33 +281,36 @@ public class FloatingWindow extends Service {
                 //passing coordinate  variable to gesture intent fails gesture rather sending variables , sending coordinates it accepts and gesture is performed
 
 
-                Toast.makeText(FloatingWindow.this, "Gesture Flag "+gestureFlag, Toast.LENGTH_SHORT).show();
-                if(gestureFlag == false) {
+
+             //   Toast.makeText(FloatingWindow.this, "Gesture Flag " + gestureFlag, Toast.LENGTH_SHORT).show();
+                if (recordFlag) {
                     Intent gestureIntent = new Intent(getApplicationContext(), accessibilityService.class);
-                    if(mode == "Tap") {
-                        Bundle gestureBundle = new Bundle();
-                        gestureBundle.putString("action", mode);
-                        gestureBundle.putInt("x", endTapTouchXX);
-                        gestureBundle.putInt("y", endTapTouchYY);
+                    if (mode == "Tap") {
+                        //Bundle gestureBundle = new Bundle();
+                      gestureIntent.putExtra("action", mode);
+                        gestureIntent.putExtra("x", endTapTouchXX);
+                        gestureIntent.putExtra("y", endTapTouchYY);
 
-                        gestureIntent.putExtras(gestureBundle);
-
-                    }else if(mode == "Swipe")
-                    {
+                       // gestureIntent.putExtras(gestureBundle);
 
 
-                        Bundle gestureBundle = new Bundle();
-                        gestureBundle.putString("action", mode);
-                        gestureBundle.putInt("x", endTapTouchXX);
-                        gestureBundle.putInt("y", endTapTouchYY);
-                        gestureBundle.putInt("dX", endSwipeTouchXX);
-                        gestureBundle.putInt("dY", endSwipeTouchYY);
 
-                        gestureIntent.putExtras(gestureBundle);
+
+
+
+
+                    } else if (mode == "Swipe") {
+
+
+                        //Bundle gestureBundle = new Bundle();
+                        gestureIntent.putExtra("action", mode);
+                        gestureIntent.putExtra("x", endTapTouchXX);
+                        gestureIntent.putExtra("y", endTapTouchYY);
+                        gestureIntent.putExtra("dX", endSwipeTouchXX);
+                        gestureIntent.putExtra("dY", endSwipeTouchYY);
+
+                        //gestureIntent.putExtras(gestureBundle);
                     }
-
-
-
 
 
                     //@loneranger
@@ -328,26 +327,49 @@ public class FloatingWindow extends Service {
                         wm2.removeView(secondWidget);
 
                     }
-                    if(thirdWidget.isAttachedToWindow()) {
-                            try {
-                                Thread.sleep(500);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-
-                            wm3.removeView(thirdWidget);
+                    if (thirdWidget.isAttachedToWindow()) {
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
 
+                        wm3.removeView(thirdWidget);
+                    }
 
-                        startService(gestureIntent);
 
-                       // Toast.makeText(FloatingWindow.this, "Tap Widget is already present", Toast.LENGTH_SHORT).show();
-                    }else{
-                        Toast.makeText(FloatingWindow.this, "There is no SecondWidget Present", Toast.LENGTH_SHORT).show();
+                    //config write
 
+                    if(mode == "Tap")
+
+                    {
+
+                        try {
+                            config_write(seq + "," + mode + "," + endTapTouchXX +"," + endTapTouchYY +"\n");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if(mode == "Swipe")
+
+                    {
+
+                        try {
+                            config_write(seq + "," + mode + "," + endTapTouchXX +"," + endTapTouchYY + "," + endSwipeTouchXX + "," +endSwipeTouchYY+ "," + "\n");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    startService(gestureIntent);
+
+                    // Toast.makeText(FloatingWindow.this, "Tap Widget is already present", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(FloatingWindow.this, "Start Recording First", Toast.LENGTH_SHORT).show();
 
 
                 }
+                seq++;
 
 
 
@@ -355,11 +377,9 @@ public class FloatingWindow extends Service {
         });
 
 
-
         floatingView.findViewById(R.id.Widget_Mode).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
 
 
                 AlertDialog alertDialog = new AlertDialog.Builder(getBaseContext())
@@ -371,7 +391,6 @@ public class FloatingWindow extends Service {
                                 mode = "Tap";
 
 
-
                                 if (!recordFlag) {
                                     start_stop_rec.setImageResource(R.drawable.floating_widget_stop_record_foreground);
                                     recordFlag = true;
@@ -380,8 +399,7 @@ public class FloatingWindow extends Service {
                                     start_stop_rec.setImageResource(R.drawable.floating_widget_start_rec_foreground);
                                     recordFlag = false;
                                 }
-                                    //flush hashmap or arraylist
-
+                                //flush hashmap or arraylist
 
 
 //                                Toast.makeText(FloatingWindow.this, ""+mode, Toast.LENGTH_SHORT).show();
@@ -392,17 +410,27 @@ public class FloatingWindow extends Service {
 
 
                                     mHandler.post(mRunnable);
-                                }else{
+                                } else {
+
+                                    if(thirdWidget.isAttachedToWindow()){
+                                    wm3.removeView(thirdWidget);}
 
                                 }
                             }
                         })
                         .setNegativeButton("Swipe", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
-                                mode="Swipe";
-                              //  Toast.makeText(FloatingWindow.this, ""+mode, Toast.LENGTH_SHORT).show();
+                                mode = "Swipe";
+                                //  Toast.makeText(FloatingWindow.this, ""+mode, Toast.LENGTH_SHORT).show();
+                                if (!recordFlag) {
+                                    start_stop_rec.setImageResource(R.drawable.floating_widget_stop_record_foreground);
+                                    recordFlag = true;
 
-                                if(!secondWidget.isAttachedToWindow()) {
+                                } else if (recordFlag) {
+                                    start_stop_rec.setImageResource(R.drawable.floating_widget_start_rec_foreground);
+                                    recordFlag = false;
+                                }
+                                if (!secondWidget.isAttachedToWindow()) {
                                     if (mRunnable == null) {
                                         mRunnable = new IntervalRunnable();
                                     }
@@ -417,10 +445,7 @@ public class FloatingWindow extends Service {
                                     e.printStackTrace();
                                 }
 
-
-
-
-
+                                if (!thirdWidget.isAttachedToWindow()){
                                 if (GmRunnable == null) {
                                     GmRunnable = new GIntervalRunnable();
                                 }
@@ -428,18 +453,15 @@ public class FloatingWindow extends Service {
 
                                 GHandler.post(GmRunnable);
 
-                            }
+                            }}
                         })
                         .create();
                 alertDialog.getWindow().setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
                 alertDialog.show();
 
 
-
-
-
-
-            }});
+            }
+        });
 
 
         return START_STICKY;
@@ -450,11 +472,12 @@ public class FloatingWindow extends Service {
     public void onDestroy() {
         super.onDestroy();
         stopSelf();
+        seq = 0;
+        if (floatingView.isAttachedToWindow()){ wm.removeView(floatingView);} if(secondWidget.isAttachedToWindow()) { wm2.removeView(secondWidget);} if(thirdWidget.isAttachedToWindow()) { wm3.removeView(thirdWidget);}
 
-        if(floatingView.isAttachedToWindow() || secondWidget.isAttachedToWindow()){
-        wm.removeView(floatingView);
-        wm2.removeView(secondWidget);
-        }
+
+
+
     }
 
     @Nullable
@@ -473,21 +496,18 @@ public class FloatingWindow extends Service {
             //Log.d("clicked","click");
 
 
-
             final WindowManager.LayoutParams params2 = new WindowManager.LayoutParams(
                     WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
                     WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                     552//| WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                     , PixelFormat.TRANSLUCENT);
-            if(!secondWidget.isAttachedToWindow())
-            {
-            wm2.addView(secondWidget,params2);
+            if (!secondWidget.isAttachedToWindow()) {
+                wm2.addView(secondWidget, params2);
             }
 
             params2.gravity = Gravity.CENTER;
             params2.x = 0;
             params2.y = 0;
-
 
 
             secondWidget.findViewById(R.id.secondWidgetMainLayout).setOnTouchListener(new View.OnTouchListener() {
@@ -500,15 +520,15 @@ public class FloatingWindow extends Service {
                     switch (motionEvent.getAction()) {
                         case MotionEvent.ACTION_DOWN:
 
-                            initialXX = updatepar.x ;
-                            initialYY = updatepar.y ;
+                            initialXX = updatepar.x;
+                            initialYY = updatepar.y;
                             startXX = updatepar.x;
                             startYY = updatepar.y;
                             startTapTouchXX = (int) motionEvent.getRawX();
                             startTapTouchYY = (int) motionEvent.getRawY();
 
-                            Log.d("Coordinates "," startX and startY "+startXX+" "+startYY);
-                            Log.d("Coordinates "," startTouchX and startTouchY "+startTapTouchXX+" "+startTapTouchYY);
+                            Log.d("Coordinates ", " startX and startY " + startXX + " " + startYY);
+                            Log.d("Coordinates ", " startTouchX and startTouchY " + startTapTouchXX + " " + startTapTouchYY);
 
                             initialTouchXX = (int) motionEvent.getRawX();
                             initialTouchYY = (int) motionEvent.getRawY();
@@ -516,8 +536,8 @@ public class FloatingWindow extends Service {
 
                         case MotionEvent.ACTION_MOVE:
 
-                            updatepar.x = initialXX+(int) (-initialTouchXX+motionEvent.getRawX()); // Formula for smooth movement
-                            updatepar.y = initialYY+(int) (-initialTouchYY+motionEvent.getRawY()); // Formula for smooth movement
+                            updatepar.x = initialXX + (int) (-initialTouchXX + motionEvent.getRawX()); // Formula for smooth movement
+                            updatepar.y = initialYY + (int) (-initialTouchYY + motionEvent.getRawY()); // Formula for smooth movement
                             wm2.updateViewLayout(secondWidget, updatepar);
                             return true;
 
@@ -531,40 +551,24 @@ public class FloatingWindow extends Service {
                             endTapTouchYY = (int) motionEvent.getRawY();
 
 
+                            Log.d("Coordinates ", " endX and endY " + endXX + " " + endYY);
 
-                            Log.d("Coordinates "," endX and endY "+endXX+" "+endYY);
-
-                            Log.d("Coordinates "," endTouchX and endTouchY "+endTapTouchXX+" "+endTapTouchYY);
+                            Log.d("Coordinates ", " endTouchX and endTouchY " + endTapTouchXX + " " + endTapTouchYY);
 
 
                             return true;
 
 
-
-                    } return false;}});
-
-
-
-
-
-
-
-
-
-
-
-
+                    }
+                    return false;
+                }
+            });
 
 
         }
 
 
-
-
-
-        }
-
-
+    }
 
 
     private GIntervalRunnable GmRunnable;
@@ -575,7 +579,6 @@ public class FloatingWindow extends Service {
         public void run() {
 
 
-
             final WindowManager.LayoutParams params3 = new WindowManager.LayoutParams(
                     WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT,
                     WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -583,16 +586,15 @@ public class FloatingWindow extends Service {
                     , PixelFormat.TRANSLUCENT);
 
             //if condition check to check whether the widget is already available in the screen if not then add the view if this condition is not present then app will crash
-            if(!thirdWidget.isAttachedToWindow()){
+            if (!thirdWidget.isAttachedToWindow()) {
 
-            wm3.addView(thirdWidget,params3);
+                wm3.addView(thirdWidget, params3);
 
             }
 
             params3.gravity = Gravity.CENTER;
             params3.x = 0;
             params3.y = 0;
-
 
 
             thirdWidget.findViewById(R.id.thirdWidgetMainLayout).setOnTouchListener(new View.OnTouchListener() {
@@ -605,15 +607,15 @@ public class FloatingWindow extends Service {
                     switch (motionEvent.getAction()) {
                         case MotionEvent.ACTION_DOWN:
 
-                            initialSwipeXX = updatepar2.x ;
-                            initialSwipeYY = updatepar2.y ;
-                           // startXX = updatepar2.x;
-                          //  startYY = updatepar2.y;
+                            initialSwipeXX = updatepar2.x;
+                            initialSwipeYY = updatepar2.y;
+                            // startXX = updatepar2.x;
+                            //  startYY = updatepar2.y;
                             startSwipeTouchXX = (int) motionEvent.getRawX();
                             startSwipeTouchYY = (int) motionEvent.getRawY();
 
-                            Log.d("Coordinates "," startX and startY "+startXX+" "+startYY);
-                            Log.d("Coordinates "," startTouchX and startTouchY "+startTapTouchXX+" "+startTapTouchYY);
+                            Log.d("Coordinates ", " startX and startY " + startXX + " " + startYY);
+                            Log.d("Coordinates ", " startTouchX and startTouchY " + startTapTouchXX + " " + startTapTouchYY);
 
                             initialSwipeTouchXX = (int) motionEvent.getRawX();
                             initialSwipeTouchYY = (int) motionEvent.getRawY();
@@ -621,8 +623,8 @@ public class FloatingWindow extends Service {
 
                         case MotionEvent.ACTION_MOVE:
 
-                            updatepar2.x = initialSwipeXX+(int) (-initialSwipeTouchXX+motionEvent.getRawX()); // Formula for smooth movement
-                            updatepar2.y = initialSwipeYY+(int) (-initialSwipeTouchYY+motionEvent.getRawY()); // Formula for smooth movement
+                            updatepar2.x = initialSwipeXX + (int) (-initialSwipeTouchXX + motionEvent.getRawX()); // Formula for smooth movement
+                            updatepar2.y = initialSwipeYY + (int) (-initialSwipeTouchYY + motionEvent.getRawY()); // Formula for smooth movement
                             wm3.updateViewLayout(thirdWidget, updatepar2);
                             return true;
 
@@ -636,32 +638,42 @@ public class FloatingWindow extends Service {
                             endSwipeTouchYY = (int) motionEvent.getRawY();
 
 
+                            Log.d("Coordinates ", " endX and endY " + endXX + " " + endYY);
 
-                            Log.d("Coordinates "," endX and endY "+endXX+" "+endYY);
-
-                            Log.d("Coordinates "," endTouchX and endTouchY "+endTapTouchXX+" "+endTapTouchYY);
+                            Log.d("Coordinates ", " endTouchX and endTouchY " + endTapTouchXX + " " + endTapTouchYY);
 
 
                             return true;
 
 
-
-                    } return false;}});
-
-
-
-
-
-
-
-
-
-
-
-
+                    }
+                    return false;
+                }
+            });
 
 
         }
+    }
+
+
+    private Boolean create_file()
+    {
+        File testFile = new File(this.getFilesDir()+"/groot.config");
+        if(testFile.exists()){testFile.delete();}
+        File configFileDirectory = new File(getApplicationContext().getFilesDir().toString());
+        configFile = new File(configFileDirectory+"/groot.config");
+        if(!configFile.exists())
+        {
+            try {
+                configFile.createNewFile();
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+
+            return true;
+        }else{
+
+            return  false;
         }
 
 
@@ -670,13 +682,33 @@ public class FloatingWindow extends Service {
 
 
 
+    private void config_write(String dataToWrite) throws IOException {
+
+
+
+        //configFile.mkdirs();
+        try {
+
+
+
+            FileWriter fr = new FileWriter(configFile, true);
+            BufferedWriter br = new BufferedWriter(fr);
+            br.write(dataToWrite);
+            br.close();
+            fr.close();
+
+            //Clear Stream
+
+
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
 
 
 
 
+}
 
-
-
-
-
+}
 

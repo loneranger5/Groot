@@ -28,12 +28,12 @@ import android.view.accessibility.AccessibilityManager;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    Button start;
-    Button pause;
+    Button start,replay,deleteRec;
     //FrameLayout mLayout;
     private static final int SYSTEM_ALERT_WINDOW_PERMISSION = 2084;
     private static final int SYSTEM_ACCESSIBILITY_PERMISSION = 1024;
@@ -53,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
             askPermission();
         }
         start = findViewById(R.id.start_stop);
+        replay = findViewById(R.id.replay);
+        deleteRec = findViewById(R.id.deleteRec);
         start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -79,6 +81,34 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
+        });
+
+
+        //Replay
+
+
+        replay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent replay = new Intent(getApplicationContext(),accessibilityService.class);
+                replay.putExtra("action","Replay");
+                startService(replay);
+            }
+        });
+
+
+        deleteRec.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                File configFile  = new File(getFilesDir()+"/groot.config");
+                if(configFile.exists())
+
+                {
+
+                    configFile.delete();
+                    Toast.makeText(MainActivity.this, "Old Recordings are Deleted Sucessfully", Toast.LENGTH_SHORT).show();
+                }
+            }
         });
 
 
